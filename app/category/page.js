@@ -69,8 +69,8 @@ export default function Home() {
   function handleCategoryFormSubmit(data) {
     const method = editMode ? "PUT" : "POST";  // Use PUT for editing, POST for creating
     const url = editMode
-      ? `${API_BASE}/category/${currentCategory._id}`  // Add category ID for editing
-      : `${API_BASE}/category`;  // For creating a new category
+      ? `/api/category/${currentCategory._id}`  // Add category ID for editing
+      : `/api/category`;  // For creating a new category
 
     fetch(url, {
       method,
