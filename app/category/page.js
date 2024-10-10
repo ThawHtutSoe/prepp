@@ -45,7 +45,7 @@ export default function Home() {
   }, []);
 
   async function fetchCategory() {
-    const data = await fetch(`${API_BASE}/category`);
+    const data = await fetch(`/api/category`);
     const categories = await data.json();
     const formattedCategories = categories.map((category) => ({
       ...category,
@@ -86,7 +86,7 @@ export default function Home() {
 
   const handleDeleteCategory = (id) => {
     if (window.confirm("Are you sure you want to delete this category?")) {
-      fetch(`${API_BASE}/category/${id}`, {
+      fetch(`/api/category/${id}`, {
         method: "DELETE",
       }).then(() => {
         fetchCategory();  // Refresh categories after deletion
