@@ -1,172 +1,91 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import Link from "next/link";
-import { DataGrid } from "@mui/x-data-grid";
+import CategoryForm from "@/app/components/forms/CategoryForm";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import Modal from "@mui/material/Modal";
+import IconButton from "@mui/material/IconButton";
+import AddBoxIcon from "@mui/icons-material/AddBox";
 
 export default function Home() {
-
-  const columns = [
-    // { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'name', headerName: 'Name', width: 150 },
-    { field: 'order', headerName: 'Order', width: 150 },
-    {
-      field: 'Action', headerName: 'Action', width: 150,
-      renderCell: (params) => {
-        return (
-          <div>
-            <button onClick={() => startEditMode(params.row)}>📝</button>
-            <button onClick={() => deleteCategory(params.row)}>🗑️</button>
-          </div>
-        )
-      }
-    },
-  ]
+  const [category, setCategory] = useState([]);
+  const [editMode, setEditMode] = useState(false);  // Manage edit mode
+  const [currentCategory, setCurrentCategory] = useState(null);  // Hold the category being edited
+  const [open, setOpen] = useState(false);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-  console.log(process.env.NEXT_PUBLIC_API_URL)
 
-  const [categoryList, setCategoryList] = useState([]);
-  const [editMode, setEditMode] = useState(false);
-  const { register, handleSubmit, reset } = useForm();
-
-  async function fetchCategory() {
-    const data = await fetch(`${API_BASE}/category`);
-    const c = await data.json();
-    const c2 = c.map((category) => {
-      return {
-        ...category,
-        id: category._id
-      }
-    })
-    setCategoryList(c2);
-  }
+  const columns = [
+    { field: "name", headerName: "Category Name", width: 150 },
+  ];
 
   useEffect(() => {
     fetchCategory();
   }, []);
 
-  function handleCategoryFormSubmit(data) {
-    if (editMode) {
-      // Updating a category
-      fetch(`${API_BASE}/category`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }).then(() => {
-        stopEditMode();
-        fetchCategory()
-      });
-      return
-    }
+  async function fetchCategory() {
+    const data = await fetch(`${API_BASE}/category`);
+    const categories = await data.json();
+    const formattedCategories = categories.map((category) => ({
+      ...category,
+      id: category._id,
+    }));
+    setCategory(formattedCategories);
+  }
 
-    // Creating a new category
-    fetch(`${API_BASE}/category`, {
-      method: "POST",
+  const handleOpen = () => {
+    setEditMode(false);  // When adding a new category, set edit mode to false
+    setCurrentCategory(null);  // Reset current category
+    setOpen(true);
+  };
+
+  const handleEditCategory = (category) => {
+    setEditMode(true);  // Enable edit mode when editing an existing category
+    setCurrentCategory(category);  // Set the category being edited
+    setOpen(true);  // Open the modal for editing
+  };
+
+  function handleCategoryFormSubmit(data) {
+    const method = editMode ? "PUT" : "POST";  // Use PUT for editing, POST for creating
+    const url = editMode
+      ? `${API_BASE}/category/${currentCategory._id}`  // Add category ID for editing
+      : `${API_BASE}/category`;  // For creating a new category
+
+    fetch(url, {
+      method,
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
-    }).then(() => fetchCategory());
-
-  }
-
-  function startEditMode(category) {
-    // console.log(category)
-    reset(category);
-    setEditMode(true);
-  }
-
-  function stopEditMode() {
-    reset({
-      name: '',
-      order: ''
-    })
-    setEditMode(false)
-  }
-
-  async function deleteCategory(category) {
-    if (!confirm(`Are you sure to delete [${category.name}]`)) return;
-
-    const id = category._id
-    await fetch(`${API_BASE}/category/${id}`, {
-      method: "DELETE"
-    })
-    fetchCategory()
+    }).then(() => {
+      fetchCategory();  // Refresh categories after submission
+      setOpen(false);  // Close modal after submit
+    });
   }
 
   return (
     <main>
-      <form onSubmit={handleSubmit(handleCategoryFormSubmit)}>
-        <div className="grid grid-cols-2 gap-4 w-fit m-4 border border-gray-800 p-2">
-          <div>Category name:</div>
-          <div>
-            <input
-              name="name"
-              type="text"
-              {...register("name", { required: true })}
-              className="border border-gray-600 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-            />
-          </div>
-
-          <div>Order:</div>
-          <div>
-            <input
-              name="order"
-              type="number"
-              {...register("order", { required: true })}
-              className="border border-gray-600 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-            />
-          </div>
-
-          <div className="col-span-2 text-right">
-            {editMode ?
-              <>
-                <input
-                  type="submit"
-                  className="italic bg-blue-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-                  value="Update" />
-
-                {' '}
-                <button
-                  onClick={() => stopEditMode()}
-                  className=" italic bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full"
-                >Cancel
-                </button>
-              </>
-              :
-              <input
-                type="submit"
-                value="Add"
-                className="w-20 italic bg-green-800 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
-              />
-            }
-          </div>
-        </div>
-      </form>
-
       <div className="mx-4">
+        <span>Category ({category.length})</span>
+        <IconButton aria-label="new-category" color="secondary" onClick={handleOpen}>
+          <AddBoxIcon />
+        </IconButton>
+        <Modal
+          open={open}
+          onClose={() => setOpen(false)}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <CategoryForm onSubmit={handleCategoryFormSubmit} />
+        </Modal>
         <DataGrid
-          rows={categoryList}
+          slots={{
+            toolbar: GridToolbar,
+          }}
+          rows={category}
           columns={columns}
+          onRowClick={(params) => handleEditCategory(params.row)}  // Trigger edit on row click
         />
       </div>
-
-      {/* <div className="ml-4">
-        <h1 className="text-xl font-bold">Category ({categoryList.length})</h1>
-        {categoryList.map((category) => (
-          <div key={category._id} className="ml-4">
-            ‣
-            <button onClick={() => startEditMode(category)} className="mr-2">📝</button>
-            <button onClick={() => deleteCategory(category)} className="mr-2">🗑️</button>
-            <Link href={`/product/category/${category._id}`} className="text-red-600">
-              {category.name} → {category.order}
-            </Link>
-          </div>
-        ))}
-      </div> */}
     </main>
   );
 }
