@@ -15,19 +15,19 @@ export default function Home() {
   }
 
   async function fetchProducts() {
-    const data = await fetch(`${APIBASE}/product`);
+    const data = await fetch(`/api/product`);
     const p = await data.json();
     setProducts(p);
   }
 
   async function fetchCategory() {
-    const data = await fetch(`${APIBASE}/category`);
+    const data = await fetch(`/api/category`);
     const c = await data.json();
     setCategory(c);
   }
 
   const createProduct = (data) => {
-    fetch(`${APIBASE}/product`, {
+    fetch(`/api/product`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -39,7 +39,7 @@ export default function Home() {
   const deleteById = (id) => async () => {
     if (!confirm("Are you sure?")) return;
 
-    await fetch(`${APIBASE}/product/${id}`, {
+    await fetch(`/api/product/${id}`, {
       method: "DELETE",
     });
     fetchProducts();

@@ -5,6 +5,7 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import Modal from "@mui/material/Modal";
 import IconButton from "@mui/material/IconButton";
 import AddBoxIcon from "@mui/icons-material/AddBox";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function Home() {
   const [category, setCategory] = useState([]);
@@ -16,6 +17,27 @@ export default function Home() {
 
   const columns = [
     { field: "name", headerName: "Category Name", width: 150 },
+    {
+      field: "actions",
+      headerName: "Actions",
+      width: 150,
+      renderCell: (params) => (
+        <>
+          <IconButton
+            color="secondary"
+            onClick={() => handleEditCategory(params.row)}
+          >
+            ✏️
+          </IconButton>
+          <IconButton
+            color="error"
+            onClick={() => handleDeleteCategory(params.row._id)}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </>
+      ),
+    },
   ];
 
   useEffect(() => {
@@ -61,6 +83,16 @@ export default function Home() {
       setOpen(false);  // Close modal after submit
     });
   }
+
+  const handleDeleteCategory = (id) => {
+    if (window.confirm("Are you sure you want to delete this category?")) {
+      fetch(`${API_BASE}/category/${id}`, {
+        method: "DELETE",
+      }).then(() => {
+        fetchCategory();  // Refresh categories after deletion
+      });
+    }
+  };
 
   return (
     <main>
